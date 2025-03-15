@@ -1,0 +1,2 @@
+# Simple line clear sound
+500 800 0.4 square
