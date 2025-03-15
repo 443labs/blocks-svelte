@@ -1,2 +1,0 @@
-# Game over sound
-523 220 1.0 sawtooth
