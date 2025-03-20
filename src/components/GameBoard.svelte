@@ -135,6 +135,11 @@
     
     return [leftEdge, rightEdge];
   }
+
+  // Add function to handle resume
+  function handleResume() {
+    dispatch('resume');
+  }
 </script>
 
 <div class="relative w-full max-w-md mx-auto">
@@ -176,12 +181,21 @@
         {#if gameState.score > 0}
           <p class="text-white mb-4">Score: {gameState.score}</p>
         {/if}
-        <button
-          class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md focus:outline-none"
-          on:click={() => dispatch('restart')}
-        >
-          {gameState.score === 0 ? 'Start Game' : 'Play Again'}
-        </button>
+        {#if gameState.isPaused}
+          <button
+            class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md focus:outline-none"
+            on:click={handleResume}
+          >
+            Resume Game
+          </button>
+        {:else}
+          <button
+            class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md focus:outline-none"
+            on:click={() => dispatch('restart')}
+          >
+            {gameState.score === 0 ? 'Start Game' : 'Play Again'}
+          </button>
+        {/if}
       </div>
     </div>
   {/if}
@@ -190,8 +204,14 @@
   {#if gameState.isPaused && !gameState.gameOver}
     <div class="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center rounded-md">
       <div class="text-center">
-        <h2 class="text-yellow-400 text-2xl font-bold">Game Paused</h2>
-        <p class="text-white mt-2">Press P to resume</p>
+        <h2 class="text-yellow-400 text-2xl font-bold mb-4">Game Paused</h2>
+        <p class="text-white mb-4">Press P to resume</p>
+        <button
+          class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md focus:outline-none"
+          on:click={handleResume}
+        >
+          Resume Game
+        </button>
       </div>
     </div>
   {/if}
