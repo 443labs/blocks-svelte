@@ -137,8 +137,10 @@
           playSound('move');
         } else if (event.key === 'ArrowUp' || event.key.toLowerCase() === 'w') {
           gameState = gameReducer(gameState, GameAction.ROTATE);
+          playSound('rotate');
         } else if (event.key === ' ') {
           gameState = gameReducer(gameState, GameAction.HARD_DROP);
+          playSound('drop');
         }
         break;
       case 'r':
