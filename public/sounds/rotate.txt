@@ -1,2 +1,0 @@
-# Simple rotate sound
-1000 400 0.1 sine 800

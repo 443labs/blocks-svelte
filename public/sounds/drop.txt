@@ -1,2 +1,0 @@
-# Simple drop sound
-880 110 0.3 triangle
