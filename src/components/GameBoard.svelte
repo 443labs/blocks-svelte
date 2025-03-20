@@ -170,13 +170,17 @@
   {#if gameState.gameOver}
     <div class="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center rounded-md">
       <div class="text-center p-4">
-        <h2 class="text-red-500 text-2xl font-bold mb-4">Game Over</h2>
-        <p class="text-white mb-4">Score: {gameState.score}</p>
+        <h2 class="text-red-500 text-2xl font-bold mb-4">
+          {gameState.score === 0 ? 'Welcome!' : 'Game Over'}
+        </h2>
+        {#if gameState.score > 0}
+          <p class="text-white mb-4">Score: {gameState.score}</p>
+        {/if}
         <button
           class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md focus:outline-none"
           on:click={() => dispatch('restart')}
         >
-          Play Again
+          {gameState.score === 0 ? 'Start Game' : 'Play Again'}
         </button>
       </div>
     </div>
