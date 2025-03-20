@@ -98,50 +98,47 @@
 
   // Keyboard controls
   function handleKeydown(event: KeyboardEvent) {
-    // Don't handle keypresses if game is over
-    if (gameState.gameOver || gameState.isPaused) return;
-
     switch (event.key) {
-      case 'ArrowLeft':
-      case 'a':
-      case 'A':
-        event.preventDefault();
-        gameState = gameReducer(gameState, GameAction.LEFT);
-        playSound('move');
-        break;
-      case 'ArrowRight':
-      case 'd':
-      case 'D':
-        event.preventDefault();
-        gameState = gameReducer(gameState, GameAction.RIGHT);
-        playSound('move');
-        break;
-      case 'ArrowDown':
-      case 's':
-      case 'S':
-        event.preventDefault();
-        gameState = gameReducer(gameState, GameAction.DOWN);
-        playSound('move');
-        break;
-      case 'ArrowUp':
-      case 'w':
-      case 'W':
-        event.preventDefault();
-        gameState = gameReducer(gameState, GameAction.ROTATE);
-        break;
-      case ' ':
-        event.preventDefault();
-        gameState = gameReducer(gameState, GameAction.HARD_DROP);
-        break;
       case 'p':
       case 'P':
         event.preventDefault();
-        if (gameState.isPaused) {
+        if (gameState.isPaused && !showSettings) {
           gameState = gameReducer(gameState, GameAction.RESUME);
           startGameLoop();
-        } else {
+        } else if (!showSettings && !gameState.gameOver) {
           gameState = gameReducer(gameState, GameAction.PAUSE);
           stopGameLoop();
+        }
+        break;
+      // Don't handle other keypresses if game is over or paused
+      case 'ArrowLeft':
+      case 'a':
+      case 'A':
+      case 'ArrowRight':
+      case 'd':
+      case 'D':
+      case 'ArrowDown':
+      case 's':
+      case 'S':
+      case 'ArrowUp':
+      case 'w':
+      case 'W':
+      case ' ':
+        if (gameState.gameOver || gameState.isPaused) return;
+        event.preventDefault();
+        if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') {
+          gameState = gameReducer(gameState, GameAction.LEFT);
+          playSound('move');
+        } else if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') {
+          gameState = gameReducer(gameState, GameAction.RIGHT);
+          playSound('move');
+        } else if (event.key === 'ArrowDown' || event.key.toLowerCase() === 's') {
+          gameState = gameReducer(gameState, GameAction.DOWN);
+          playSound('move');
+        } else if (event.key === 'ArrowUp' || event.key.toLowerCase() === 'w') {
+          gameState = gameReducer(gameState, GameAction.ROTATE);
+        } else if (event.key === ' ') {
+          gameState = gameReducer(gameState, GameAction.HARD_DROP);
         }
         break;
       case 'r':
@@ -375,7 +372,17 @@
     <!-- Game Board -->
     <div class="flex justify-center items-center h-full max-h-screen pr-64">
       <div class="w-auto h-[90vh] aspect-[1/2]">
-        <GameBoard {gameState} on:restart={restartGame} on:lineClear={() => null} />
+        <GameBoard 
+          {gameState} 
+          on:restart={restartGame} 
+          on:resume={() => {
+            if (gameState.isPaused) {
+              gameState = gameReducer(gameState, GameAction.RESUME);
+              startGameLoop();
+            }
+          }} 
+          on:lineClear={() => null} 
+        />
       </div>
     </div>
   </div>
