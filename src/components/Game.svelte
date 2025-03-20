@@ -64,8 +64,8 @@
     gameState = createInitialState();
     gameState.level = level;
     gameState.prevLevel = level;
+    gameState.gameOver = true; // Start with game over state to show Start Game button
     dropSpeed = calculateDropSpeed(level);
-    startGameLoop();
   }
 
   // Setup game loop
@@ -163,7 +163,11 @@
   // Restart game function
   function restartGame() {
     saveHighScore(); // Save high score before restarting
-    createNewGame(startLevel);
+    gameState = createInitialState(); // Create fresh state
+    gameState.level = startLevel;
+    gameState.prevLevel = startLevel;
+    gameState.gameOver = false; // Clear game over state immediately
+    startGameLoop(); // Start the game loop immediately
   }
 
   // Toggle settings menu
@@ -292,7 +296,7 @@
     window.addEventListener('click', startAudio);
     window.addEventListener('keydown', startAudio);
 
-    // Start game
+    // Start game in initial state without starting the game loop
     window.addEventListener('keydown', handleKeydown);
     createNewGame(startLevel);
     return () => {
@@ -310,13 +314,10 @@
   });
 </script>
 
-<div class="game-container mx-auto p-4 max-w-6xl">
-  <h1 class="text-3xl font-bold text-center text-white mb-6">Blocks Game</h1>
-  
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-    <div class="md:col-span-2">
-      <GameBoard {gameState} on:restart={restartGame} on:lineClear={() => null} />
-    </div>
+<div class="game-container min-h-screen flex">
+  <!-- Left Panel with Title, Next Piece, and Score -->
+  <div class="w-64 bg-gray-800 p-4 flex flex-col border-r border-gray-700">
+    <h1 class="text-3xl font-bold text-white mb-6">Blocks Game</h1>
     
     <div class="flex flex-col gap-6">
       <NextPiece nextTetromino={gameState.nextTetromino} />
@@ -326,35 +327,24 @@
         lines={gameState.lines}
         {highScore}
       />
-      <Controls />
-      
-      <div class="game-actions mt-auto">
+    </div>
+  </div>
+
+  <!-- Main Game Area -->
+  <div class="flex-1 p-4 relative">
+    <!-- Right Side Controls -->
+    <div class="absolute top-4 right-0 w-64 flex flex-col gap-4 pr-4">
+      <!-- Combined controls section -->
+      <div class="flex flex-col gap-3">
         <button
-          class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none"
-          on:click={restartGame}
+          class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none"
+          on:click={toggleSettings}
         >
-          {gameState.gameOver ? 'New Game' : 'Restart Game'}
+          Settings
         </button>
-        
-        <div class="flex gap-3 mt-3">
-          <button
-            class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none"
-            on:click={toggleSettings}
-          >
-            Settings
-          </button>
-          
-          <button 
-            class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none"
-            on:click={toggleSound}
-          >
-            {soundsEnabled ? '🔊 Sound On' : '🔇 Sound Off'}
-          </button>
-        </div>
-        
         {#if !gameState.gameOver}
           <button
-            class="w-full mt-3 bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none"
+            class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none"
             on:click={() => {
               if (gameState.isPaused && !showSettings) {
                 gameState = gameReducer(gameState, GameAction.RESUME);
@@ -368,10 +358,28 @@
             {gameState.isPaused ? 'Resume Game' : 'Pause Game'}
           </button>
         {/if}
+        <button 
+          class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none"
+          on:click={toggleSound}
+        >
+          {soundsEnabled ? '🔊 Sound On' : '🔇 Sound Off'}
+        </button>
+
+        <!-- Controls moved up here -->
+        <div class="mt-4 bg-gray-900 rounded-md">
+          <Controls />
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Board -->
+    <div class="flex justify-center items-center h-full max-h-screen pr-64">
+      <div class="w-auto h-[90vh] aspect-[1/2]">
+        <GameBoard {gameState} on:restart={restartGame} on:lineClear={() => null} />
       </div>
     </div>
   </div>
-  
+
   <!-- Settings Modal -->
   {#if showSettings}
     <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
@@ -436,11 +444,11 @@
       radial-gradient(rgba(75, 85, 99, 0.2) 1px, transparent 1px);
     background-size: 40px 40px;
     background-position: 0 0, 20px 20px;
+    margin: 0;
+    overflow: hidden;
   }
   
   .game-container {
-    min-height: 100vh;
-    padding-top: 2rem;
-    padding-bottom: 2rem;
+    height: 100vh;
   }
 </style>
