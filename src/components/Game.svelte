@@ -8,14 +8,14 @@
   import Controls from './Controls.svelte';
 
   // Initialize game state
-  let gameState = createInitialState();
+  let gameState = $state(createInitialState());
   let gameInterval: number | undefined;
   let dropSpeed = calculateDropSpeed(gameState.level);
-  let highScore = 0;
-  let soundsEnabled = true; // Only use this variable name throughout
+  let highScore = $state(0);
+  let soundsEnabled = $state(true);
   let bgMusic: HTMLAudioElement;
-  let showSettings = false;
-  let startLevel = 1;
+  let showSettings = $state(false);
+  let startLevel = $state(1);
 
   // Audio elements
   let moveSound: HTMLAudioElement;
@@ -28,9 +28,9 @@
   // Play a sound effect
   function playSound(soundType: string) {
     if (!soundsEnabled) return;
-    
+
     console.log("Playing sound:", soundType);
-    
+
     switch (soundType) {
       case 'move':
         moveSound.currentTime = 0;
@@ -64,27 +64,25 @@
     gameState = createInitialState();
     gameState.level = level;
     gameState.prevLevel = level;
-    gameState.gameOver = true; // Start with game over state to show Start Game button
+    gameState.gameOver = true;
     dropSpeed = calculateDropSpeed(level);
   }
 
   // Setup game loop
   function startGameLoop() {
-    stopGameLoop(); // Clear any existing interval first
+    stopGameLoop();
     dropSpeed = calculateDropSpeed(gameState.level);
     gameInterval = setInterval(() => {
       const prevLevel = gameState.level;
       gameState = gameTick(gameState);
-      
-      // Play level up sound if level changed
+
       if (gameState.level !== prevLevel) {
         playSound('levelUp');
       }
-      
+
       if (gameState.level !== gameState.prevLevel) {
-        // Recalculate drop speed if level changed
         dropSpeed = calculateDropSpeed(gameState.level);
-        startGameLoop(); // Restart game loop with new speed
+        startGameLoop();
       }
     }, dropSpeed);
   }
@@ -110,7 +108,6 @@
           stopGameLoop();
         }
         break;
-      // Don't handle other keypresses if game is over or paused
       case 'ArrowLeft':
       case 'a':
       case 'A':
@@ -152,21 +149,20 @@
   }
 
   // Watch for game state changes to play sounds
-  $: {
-    // Check if game just ended
+  $effect(() => {
     if (gameState.gameOver) {
       playSound('gameOver');
     }
-  }
+  });
 
   // Restart game function
   function restartGame() {
-    saveHighScore(); // Save high score before restarting
-    gameState = createInitialState(); // Create fresh state
+    saveHighScore();
+    gameState = createInitialState();
     gameState.level = startLevel;
     gameState.prevLevel = startLevel;
-    gameState.gameOver = false; // Clear game over state immediately
-    startGameLoop(); // Start the game loop immediately
+    gameState.gameOver = false;
+    startGameLoop();
   }
 
   // Toggle settings menu
@@ -182,21 +178,9 @@
   function toggleSound() {
     soundsEnabled = !soundsEnabled;
     localStorage.setItem('blocksGameSoundEnabled', String(soundsEnabled));
-    
-    console.log("Sound toggled:", soundsEnabled);
-    
-    if (soundsEnabled) {
-      playBackgroundMusic();
-    } else {
-      pauseBackgroundMusic();
-    }
-  }
 
-  // Toggle background music
-  function toggleBackgroundMusic() {
-    soundsEnabled = !soundsEnabled;
-    localStorage.setItem('blocksGameSoundEnabled', String(soundsEnabled));
-    
+    console.log("Sound toggled:", soundsEnabled);
+
     if (soundsEnabled) {
       playBackgroundMusic();
     } else {
@@ -223,8 +207,7 @@
       if (savedHighScore) {
         highScore = parseInt(savedHighScore, 10);
       }
-      
-      // Load sound preference
+
       const savedSoundEnabled = localStorage.getItem('blocksGameSoundEnabled');
       if (savedSoundEnabled !== null) {
         soundsEnabled = savedSoundEnabled === 'true';
@@ -260,18 +243,15 @@
   // Add and remove event listeners on mount/destroy
   onMount(() => {
     console.log("Component mounted");
-    
-    // Initialize sound preference from localStorage
+
     const savedSoundPreference = localStorage.getItem('blocksGameSoundEnabled');
     if (savedSoundPreference !== null) {
       soundsEnabled = savedSoundPreference === 'true';
       console.log("Loaded sound preference:", soundsEnabled);
     }
 
-    // Initialize high score from localStorage
     loadHighScore();
-    
-    // Initialize audio elements
+
     moveSound = new Audio('/sounds/move.wav');
     rotateSound = new Audio('/sounds/rotate.wav');
     dropSound = new Audio('/sounds/drop.wav');
@@ -279,10 +259,8 @@
     levelUpSound = new Audio('/sounds/levelup.wav');
     gameOverSound = new Audio('/sounds/gameover.wav');
 
-    // Setup background music
     setupBackgroundMusic();
-    
-    // Add a user interaction handler to start audio (browser policy)
+
     const startAudio = () => {
       if (soundsEnabled) {
         console.log("User interaction - starting audio");
@@ -291,11 +269,10 @@
       window.removeEventListener('click', startAudio);
       window.removeEventListener('keydown', startAudio);
     };
-    
+
     window.addEventListener('click', startAudio);
     window.addEventListener('keydown', startAudio);
 
-    // Start game in initial state without starting the game loop
     window.addEventListener('keydown', handleKeydown);
     createNewGame(startLevel);
     return () => {
@@ -306,7 +283,7 @@
 
   // Clean up on destroy
   onDestroy(() => {
-    saveHighScore(); // Save high score before component is destroyed
+    saveHighScore();
     stopGameLoop();
     pauseBackgroundMusic();
     window.removeEventListener('keydown', handleKeydown);
@@ -317,12 +294,12 @@
   <!-- Left Panel with Title, Next Piece, and Score -->
   <div class="w-64 bg-gray-800 p-4 flex flex-col border-r border-gray-700">
     <h1 class="text-3xl font-bold text-white mb-6">Blocks Game</h1>
-    
+
     <div class="flex flex-col gap-6">
       <NextPiece nextTetromino={gameState.nextTetromino} />
-      <ScoreBoard 
-        score={gameState.score} 
-        level={gameState.level} 
+      <ScoreBoard
+        score={gameState.score}
+        level={gameState.level}
         lines={gameState.lines}
         {highScore}
       />
@@ -333,18 +310,17 @@
   <div class="flex-1 p-4 relative">
     <!-- Right Side Controls -->
     <div class="absolute top-4 right-0 w-64 flex flex-col gap-4 pr-4">
-      <!-- Combined controls section -->
       <div class="flex flex-col gap-3">
         <button
           class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none"
-          on:click={toggleSettings}
+          onclick={toggleSettings}
         >
           Settings
         </button>
         {#if !gameState.gameOver}
           <button
             class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none"
-            on:click={() => {
+            onclick={() => {
               if (gameState.isPaused && !showSettings) {
                 gameState = gameReducer(gameState, GameAction.RESUME);
                 startGameLoop();
@@ -357,14 +333,13 @@
             {gameState.isPaused ? 'Resume Game' : 'Pause Game'}
           </button>
         {/if}
-        <button 
+        <button
           class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none"
-          on:click={toggleSound}
+          onclick={toggleSound}
         >
           {soundsEnabled ? '🔊 Sound On' : '🔇 Sound Off'}
         </button>
 
-        <!-- Controls moved up here -->
         <div class="mt-4 bg-gray-900 rounded-md">
           <Controls />
         </div>
@@ -374,16 +349,16 @@
     <!-- Game Board -->
     <div class="flex justify-center items-center h-full max-h-screen pr-64">
       <div class="w-auto h-[90vh] aspect-[1/2]">
-        <GameBoard 
-          {gameState} 
-          on:restart={restartGame} 
-          on:resume={() => {
+        <GameBoard
+          {gameState}
+          onrestart={restartGame}
+          onresume={() => {
             if (gameState.isPaused) {
               gameState = gameReducer(gameState, GameAction.RESUME);
               startGameLoop();
             }
-          }} 
-          on:lineClear={() => null} 
+          }}
+          onlineClear={() => null}
         />
       </div>
     </div>
@@ -394,12 +369,12 @@
     <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
       <div class="bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full">
         <h2 class="text-2xl font-bold text-white mb-4">Game Settings</h2>
-        
+
         <div class="mb-4">
           <label for="level-select" class="block text-white text-sm font-medium mb-2">
             Starting Level (Higher = Faster)
           </label>
-          <select 
+          <select
             id="level-select"
             class="w-full bg-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             bind:value={startLevel}
@@ -409,28 +384,28 @@
             {/each}
           </select>
         </div>
-        
+
         <div class="mb-4">
           <label class="flex items-center space-x-2">
-            <input 
-              type="checkbox" 
-              class="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500" 
+            <input
+              type="checkbox"
+              class="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
               bind:checked={soundsEnabled}
             >
             <span class="text-white">Enable Sound Effects</span>
           </label>
         </div>
-        
+
         <div class="flex justify-end space-x-3">
-          <button 
+          <button
             class="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-md"
-            on:click={toggleSettings}
+            onclick={toggleSettings}
           >
             Cancel
           </button>
-          <button 
+          <button
             class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
-            on:click={() => {
+            onclick={() => {
               toggleSettings();
               if (gameState.gameOver) {
                 restartGame();
@@ -448,7 +423,7 @@
 <style>
   :global(body) {
     background-color: #111827;
-    background-image: 
+    background-image:
       radial-gradient(rgba(75, 85, 99, 0.4) 1px, transparent 1px),
       radial-gradient(rgba(75, 85, 99, 0.2) 1px, transparent 1px);
     background-size: 40px 40px;
@@ -456,7 +431,7 @@
     margin: 0;
     overflow: hidden;
   }
-  
+
   .game-container {
     height: 100vh;
   }
