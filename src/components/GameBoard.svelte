@@ -11,34 +11,23 @@
   } = $props();
 
   // Track previous position to detect landings
-  let prevPosition: Position | null = $state(null);
-  let justLanded = $state(false);
+  let prevPosition: Position | null = null;
   let landingAnimation = $state(false);
 
-  // Watch for landing
+  // Watch for landing and trigger animation
   $effect(() => {
     if (gameState.currentTetromino && prevPosition) {
       if (gameState.ghostPosition &&
           gameState.ghostPosition.y === gameState.currentTetromino.position.y) {
-        justLanded = true;
-      } else {
-        justLanded = false;
+        landingAnimation = true;
+        setTimeout(() => {
+          landingAnimation = false;
+        }, 300);
       }
     }
 
     if (gameState.currentTetromino) {
       prevPosition = { ...gameState.currentTetromino.position };
-    }
-  });
-
-  // Trigger landing animation when a piece locks into place
-  $effect(() => {
-    if (justLanded) {
-      landingAnimation = true;
-      setTimeout(() => {
-        landingAnimation = false;
-      }, 300);
-      justLanded = false;
     }
   });
 
@@ -134,7 +123,7 @@
   }
 </script>
 
-<div class="relative w-full max-w-md mx-auto">
+<div class="relative w-full h-full">
   <!-- Drop guides -->
   {#if gameState.currentTetromino && !gameState.gameOver && !gameState.isPaused}
     {#each getDropGuides() as column}
@@ -145,7 +134,7 @@
     {/each}
   {/if}
 
-  <div class="grid-container w-full aspect-[1/2] bg-gray-900 rounded-md overflow-hidden grid grid-cols-10 grid-rows-20 border-2 border-gray-700 relative">
+  <div class="grid-container h-full aspect-[1/2] bg-gray-900 rounded-md overflow-hidden grid grid-cols-10 grid-rows-20 border-2 border-gray-700 relative">
     {#each gameState.grid as row, rowIndex}
       {#each row as cell, colIndex}
         <div
@@ -164,7 +153,7 @@
 
   <!-- Game Over Overlay -->
   {#if gameState.gameOver}
-    <div class="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center rounded-md">
+    <div class="absolute inset-0 bg-black/75 flex items-center justify-center rounded-md">
       <div class="text-center p-4">
         <h2 class="text-red-500 text-2xl font-bold mb-4">
           {gameState.score === 0 ? 'Welcome!' : 'Game Over'}
@@ -193,7 +182,7 @@
 
   <!-- Paused Overlay -->
   {#if gameState.isPaused && !gameState.gameOver}
-    <div class="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center rounded-md">
+    <div class="absolute inset-0 bg-black/75 flex items-center justify-center rounded-md">
       <div class="text-center">
         <h2 class="text-yellow-400 text-2xl font-bold mb-4">Game Paused</h2>
         <p class="text-white mb-4">Press P to resume</p>

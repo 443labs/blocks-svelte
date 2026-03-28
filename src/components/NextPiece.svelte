@@ -1,6 +1,6 @@
 <script lang="ts">
   import { COLORS } from '../game/tetrominoes';
-  import type { Tetromino, CellType } from '../game/types';
+  import type { Tetromino } from '../game/types';
 
   let { nextTetromino }: { nextTetromino: Tetromino | null } = $props();
 </script>
@@ -8,26 +8,24 @@
 <div class="next-piece w-full bg-gray-900 p-4 rounded-md border-2 border-gray-700">
   <h3 class="text-white text-lg font-semibold mb-2 text-center">Next</h3>
 
-  <div class="grid gap-0.5 w-full aspect-square justify-center items-center">
-    {#if nextTetromino}
-      <div class="grid grid-cols-4 grid-rows-4 bg-gray-800 w-full aspect-square">
-        {#each new Array(4) as _, y}
-          {#each new Array(4) as _, x}
+  {#if nextTetromino}
+    <div class="w-full aspect-square bg-gray-800 flex items-center justify-center">
+      <div
+        style="display: grid; grid-template-columns: repeat({nextTetromino.shape[0].length}, 1fr); width: {nextTetromino.shape[0].length / 4 * 100}%; aspect-ratio: {nextTetromino.shape[0].length} / {nextTetromino.shape.length};"
+      >
+        {#each nextTetromino.shape as row}
+          {#each row as cell}
             <div
-              class="cell w-full h-full border border-gray-800 transition-colors duration-100"
-              style="background-color: {
-                nextTetromino.shape[y] && nextTetromino.shape[y][x] !== 0
-                  ? COLORS[nextTetromino.type]
-                  : 'transparent'
-              }"
+              class="border border-gray-800"
+              style="background-color: {cell ? COLORS[nextTetromino.type] : 'transparent'}"
             ></div>
           {/each}
         {/each}
       </div>
-    {:else}
-      <div class="w-full aspect-square bg-gray-800"></div>
-    {/if}
-  </div>
+    </div>
+  {:else}
+    <div class="w-full aspect-square bg-gray-800"></div>
+  {/if}
 </div>
 
 <style>
