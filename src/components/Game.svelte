@@ -16,6 +16,7 @@
   let bgMusic: HTMLAudioElement;
   let showSettings = $state(false);
   let startLevel = $state(1);
+  let gameHasStarted = $state(false);
 
   // Audio elements
   let moveSound: HTMLAudioElement;
@@ -150,7 +151,7 @@
 
   // Watch for game state changes to play sounds
   $effect(() => {
-    if (gameState.gameOver) {
+    if (gameState.gameOver && gameHasStarted) {
       playSound('gameOver');
     }
   });
@@ -162,6 +163,7 @@
     gameState.level = startLevel;
     gameState.prevLevel = startLevel;
     gameState.gameOver = false;
+    gameHasStarted = true;
     startGameLoop();
   }
 
@@ -220,7 +222,7 @@
   // Setup background music
   function setupBackgroundMusic() {
     console.log("Setting up background music");
-    bgMusic = new Audio('/sounds/theme.wav');
+    bgMusic = new Audio(`${import.meta.env.BASE_URL}sounds/theme.wav`);
     bgMusic.loop = true;
     bgMusic.volume = 0.4;
   }
@@ -252,12 +254,13 @@
 
     loadHighScore();
 
-    moveSound = new Audio('/sounds/move.wav');
-    rotateSound = new Audio('/sounds/rotate.wav');
-    dropSound = new Audio('/sounds/drop.wav');
-    clearSound = new Audio('/sounds/clear.wav');
-    levelUpSound = new Audio('/sounds/levelup.wav');
-    gameOverSound = new Audio('/sounds/gameover.wav');
+    const base = import.meta.env.BASE_URL;
+    moveSound = new Audio(`${base}sounds/move.wav`);
+    rotateSound = new Audio(`${base}sounds/rotate.wav`);
+    dropSound = new Audio(`${base}sounds/drop.wav`);
+    clearSound = new Audio(`${base}sounds/clear.wav`);
+    levelUpSound = new Audio(`${base}sounds/levelup.wav`);
+    gameOverSound = new Audio(`${base}sounds/gameover.wav`);
 
     setupBackgroundMusic();
 
@@ -290,12 +293,12 @@
   });
 </script>
 
-<div class="game-container min-h-screen flex">
+<div class="game-container h-screen flex items-stretch justify-center overflow-hidden">
   <!-- Left Panel with Title, Next Piece, and Score -->
-  <div class="w-64 bg-gray-800 p-4 flex flex-col border-r border-gray-700">
-    <h1 class="text-3xl font-bold text-white mb-6">Blocks Game</h1>
+  <div class="w-48 shrink-0 bg-gray-800 p-3 flex flex-col border-r border-gray-700">
+    <h1 class="text-2xl font-bold text-white mb-4">Blocks</h1>
 
-    <div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-4">
       <NextPiece nextTetromino={gameState.nextTetromino} />
       <ScoreBoard
         score={gameState.score}
@@ -303,23 +306,18 @@
         lines={gameState.lines}
         {highScore}
       />
-    </div>
-  </div>
 
-  <!-- Main Game Area -->
-  <div class="flex-1 p-4 relative">
-    <!-- Right Side Controls -->
-    <div class="absolute top-4 right-0 w-64 flex flex-col gap-4 pr-4">
-      <div class="flex flex-col gap-3">
+      <!-- Inline controls for narrow viewports -->
+      <div class="flex flex-col gap-2 lg:hidden">
         <button
-          class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none"
+          class="bg-blue-600 hover:bg-blue-700 text-white py-1.5 px-3 rounded-md text-sm transition-colors duration-200 focus:outline-none"
           onclick={toggleSettings}
         >
           Settings
         </button>
         {#if !gameState.gameOver}
           <button
-            class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none"
+            class="bg-gray-700 hover:bg-gray-600 text-white py-1.5 px-3 rounded-md text-sm transition-colors duration-200 focus:outline-none"
             onclick={() => {
               if (gameState.isPaused && !showSettings) {
                 gameState = gameReducer(gameState, GameAction.RESUME);
@@ -330,43 +328,75 @@
               }
             }}
           >
-            {gameState.isPaused ? 'Resume Game' : 'Pause Game'}
+            {gameState.isPaused ? 'Resume' : 'Pause'}
           </button>
         {/if}
         <button
-          class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white py-1.5 px-3 rounded-md text-sm transition-colors duration-200 focus:outline-none"
           onclick={toggleSound}
         >
-          {soundsEnabled ? '🔊 Sound On' : '🔇 Sound Off'}
+          {soundsEnabled ? '🔊 On' : '🔇 Off'}
         </button>
-
-        <div class="mt-4 bg-gray-900 rounded-md">
-          <Controls />
-        </div>
       </div>
     </div>
+  </div>
 
-    <!-- Game Board -->
-    <div class="flex justify-center items-center h-full max-h-screen pr-64">
-      <div class="w-auto h-[90vh] aspect-[1/2]">
-        <GameBoard
-          {gameState}
-          onrestart={restartGame}
-          onresume={() => {
-            if (gameState.isPaused) {
-              gameState = gameReducer(gameState, GameAction.RESUME);
-              startGameLoop();
-            }
-          }}
-          onlineClear={() => null}
-        />
-      </div>
+  <!-- Game Board -->
+  <div class="flex items-center py-2">
+    <div style="height: 96vh; aspect-ratio: 1/2;">
+      <GameBoard
+        {gameState}
+        onrestart={restartGame}
+        onresume={() => {
+          if (gameState.isPaused) {
+            gameState = gameReducer(gameState, GameAction.RESUME);
+            startGameLoop();
+          }
+        }}
+        onlineClear={() => null}
+      />
+    </div>
+  </div>
+
+  <!-- Right Panel with Controls (hidden on narrow viewports) -->
+  <div class="hidden lg:flex w-52 shrink-0 p-4 flex-col gap-3">
+    <button
+      class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none"
+      onclick={toggleSettings}
+    >
+      Settings
+    </button>
+    {#if !gameState.gameOver}
+      <button
+        class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none"
+        onclick={() => {
+          if (gameState.isPaused && !showSettings) {
+            gameState = gameReducer(gameState, GameAction.RESUME);
+            startGameLoop();
+          } else if (!showSettings) {
+            gameState = gameReducer(gameState, GameAction.PAUSE);
+            stopGameLoop();
+          }
+        }}
+      >
+        {gameState.isPaused ? 'Resume Game' : 'Pause Game'}
+      </button>
+    {/if}
+    <button
+      class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none"
+      onclick={toggleSound}
+    >
+      {soundsEnabled ? '🔊 Sound On' : '🔇 Sound Off'}
+    </button>
+
+    <div class="mt-4 bg-gray-900 rounded-md">
+      <Controls />
     </div>
   </div>
 
   <!-- Settings Modal -->
   {#if showSettings}
-    <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+    <div class="fixed inset-0 bg-black/75 flex items-center justify-center z-50">
       <div class="bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full">
         <h2 class="text-2xl font-bold text-white mb-4">Game Settings</h2>
 
@@ -434,5 +464,6 @@
 
   .game-container {
     height: 100vh;
+    max-height: 100vh;
   }
 </style>
